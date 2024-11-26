@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  website:
+    image: oranmz/app:latest
+    ports:
+      - "8080:80"
+    pull_policy: always
+    restart: always
