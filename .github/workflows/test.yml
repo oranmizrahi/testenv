@@ -21,3 +21,4 @@ jobs:
           pwd
           ls -la
           docker --version
+          whoami
