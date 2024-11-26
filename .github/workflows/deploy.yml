@@ -20,22 +20,6 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: oranmz/app:latest,oranmz/app:${{ github.sha }}
-        
-    - name: Copy docker-compose.yml to VM and Deploy
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.AZURE_VM_IP }}
-        username: ${{ secrets.AZURE_VM_USERNAME }}
-        password: ${{ secrets.AZURE_VM_PASSWORD }}
-        source: "docker-compose.yml"
-        target: "testing"
         
     - name: Deploy to Azure VM
       uses: appleboy/ssh-action@master
