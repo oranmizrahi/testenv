@@ -8,18 +8,27 @@ on:
     tags:
       - 'v*'
 
+env:
+  PROJECT_PATH: testing
+  DOCKER_COMPOSE_FILE: docker-compose.yml
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
-    
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    - name: Generate deployment timestamp
+      id: timestamp
+      run: echo "DEPLOY_TIMESTAMP=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_ENV
         
     - name: Deploy to Azure VM
       uses: appleboy/ssh-action@master
@@ -28,7 +37,68 @@ jobs:
         username: ${{ secrets.AZURE_VM_USERNAME }}
         password: ${{ secrets.AZURE_VM_PASSWORD }}
         script: |
-          cd testing
+          # Navigate to project directory
+          cd ${PROJECT_PATH}
+          
+          # Backup current .env file if it exists
+          if [ -f .env ]; then
+            cp .env .env.backup.${{ env.DEPLOY_TIMESTAMP }}
+          fi
+          
+          # Create/update .env file
           echo "TAG=${{ github.sha }}" > .env
-          docker-compose pull
-          docker-compose up -d
+          echo "DEPLOY_TIMESTAMP=${{ env.DEPLOY_TIMESTAMP }}" >> .env
+          
+          # Pull new images
+          docker-compose pull || exit 1
+          
+          # Check if containers are running and healthy
+          if docker-compose ps | grep -q "Up"; then
+            echo "Performing rolling update..."
+            # Stop old containers gracefully
+            docker-compose stop -t 30
+          fi
+          
+          # Remove old containers but keep volumes
+          docker-compose rm -f
+          
+          # Start new containers
+          docker-compose up -d --remove-orphans
+          
+          # Wait for containers to be healthy
+          sleep 10
+          
+          # Verify deployment
+          if ! docker-compose ps | grep -q "Up"; then
+            echo "Deployment failed - containers are not running"
+            
+            # Rollback to previous state if backup exists
+            if [ -f .env.backup.${{ env.DEPLOY_TIMESTAMP }} ]; then
+              echo "Rolling back to previous version..."
+              cp .env.backup.${{ env.DEPLOY_TIMESTAMP }} .env
+              docker-compose up -d
+            fi
+            
+            exit 1
+          fi
+          
+          # Cleanup old backups (keep last 5)
+          ls -t .env.backup.* 2>/dev/null | tail -n +6 | xargs -r rm
+          
+          # Cleanup old images
+          docker image prune -f --filter "until=24h"
+          
+          echo "Deployment successful!"
+
+    - name: Verify Deployment
+      if: success()
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.AZURE_VM_IP }}
+        username: ${{ secrets.AZURE_VM_USERNAME }}
+        password: ${{ secrets.AZURE_VM_PASSWORD }}
+        script: |
+          cd ${PROJECT_PATH}
+          docker-compose ps
+          echo "Current deployment:"
+          cat .env
