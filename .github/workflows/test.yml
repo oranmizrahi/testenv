@@ -1,7 +1,7 @@
-name: Test SSH Connection
+name: Deploy to Azure VM
 
 on:
-  workflow_dispatch:  # This allows manual trigger from GitHub UI
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -11,14 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Test SSH Connection
+    - name: Deploy to Azure VM
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.AZURE_VM_IP }}
         username: ${{ secrets.AZURE_VM_USERNAME }}
-        key: ${{ secrets.AZURE_VM_SSH_KEY }}
+        password: ${{ secrets.AZURE_VM_PASSWORD }}  # Use password instead of key
         script: |
-          pwd
-          ls -la
-          docker --version
           whoami
+          pwd
