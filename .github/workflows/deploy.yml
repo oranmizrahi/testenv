@@ -36,6 +36,6 @@ jobs:
         password: ${{ secrets.AZURE_VM_PASSWORD }}
         script: |
           cd testing
-          docker-compose down -v
           docker-compose pull
+          docker-compose down
           docker-compose up -d
