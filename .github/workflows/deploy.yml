@@ -1,6 +1,7 @@
-name: Deploy to Azure VM
+name: Build and Deploy to Azure VM
 
 on:
+  workflow_dispatch:  # Allows manual triggering
   push:
     branches: [ "main" ]
   tags:
@@ -31,8 +32,8 @@ jobs:
       with:
         host: ${{ secrets.AZURE_VM_IP }}
         username: ${{ secrets.AZURE_VM_USERNAME }}
-        key: ${{ secrets.AZURE_VM_SSH_KEY }}
+        password: ${{ secrets.AZURE_VM_PASSWORD }}  # Using password authentication
         script: |
-          cd /path/to/your/app
+          cd testing
           docker-compose pull
           docker-compose up -d
