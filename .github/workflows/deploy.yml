@@ -29,7 +29,6 @@ jobs:
         password: ${{ secrets.AZURE_VM_PASSWORD }}
         script: |
           cd testing
-          echo "TAG=${{ github.sha }}" > .env
           docker-compose down -v
           docker-compose pull
           docker-compose up -d
