@@ -45,7 +45,9 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
+      - name: Check vm running status
+        run: |
+          az vm get -instance-view --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_VM_NAME }} --query instanceView.statuses[1].displayStatus
       - name: Copy and deploy to Azure VM
         run: |
           az vm run-command invoke \
