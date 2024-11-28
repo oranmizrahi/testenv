@@ -39,13 +39,15 @@ jobs:
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           BASE_VERSION=$(echo $LAST_TAG | sed 's/v//')
           
-          if [[ $GITHUB_REF == "refs/heads/main" ]]; then
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # Production release with tag
+            VERSION=${GITHUB_REF#refs/tags/v}
             echo "ENV=prod" >> $GITHUB_ENV
-            VERSION="$BASE_VERSION"
           else
+            # Branch build - always use run number
             BRANCH=${GITHUB_REF#refs/heads/}
             echo "ENV=$BRANCH" >> $GITHUB_ENV
-            VERSION="$BASE_VERSION.${GITHUB_RUN_NUMBER}" #
+            VERSION="$BASE_VERSION.${GITHUB_RUN_NUMBER}"
           fi
           
           echo "VERSION=$VERSION" >> $GITHUB_ENV
@@ -58,8 +60,8 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=${{ env.ENV }},enable=${{ github.ref != 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=raw,value=${{ env.ENV }},enable=${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
