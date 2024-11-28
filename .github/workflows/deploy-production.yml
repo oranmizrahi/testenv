@@ -20,7 +20,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Production VM
+      - name: Deploy to Azure VM
         run: |
           az vm run-command invoke \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
@@ -29,5 +29,5 @@ jobs:
             --scripts 'cd /home/ISadmin/app ; \
                       echo "Deploying to Production" ; \
                       docker-compose --profile prod down -v ; \
-                      docker compose --profile prod pull ; \
-                      docker compose --profile prod up -d --force-recreate'
+                      docker-compose --profile prod pull ; \
+                      docker-compose --profile prod up -d --force-recreate'
