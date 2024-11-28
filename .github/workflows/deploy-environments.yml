@@ -52,7 +52,7 @@ jobs:
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --name ${{ secrets.AZURE_VM_NAME }} \
             --command-id RunShellScript \
-            --scripts 'cd /app ; \
+            --scripts 'cd /home/ISadmin/app ; \
                       echo "Deploying to ${{ env.DEPLOY_ENV }}" ; \
                       docker-compose --profile ${{ env.DEPLOY_ENV }} down -v ; \
                       docker-compose --profile ${{ env.DEPLOY_ENV }} pull ; \
