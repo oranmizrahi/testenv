@@ -55,6 +55,6 @@ jobs:
             --name ${{ secrets.AZURE_VM_NAME }} \
             --command-id RunShellScript \
             --scripts 'cd /app && \
-                      docker compose --profile ${{ env.DEPLOY_ENV }} down -v && \
-                      docker compose --profile ${{ env.DEPLOY_ENV }} pull && \
-                      docker compose --profile ${{ env.DEPLOY_ENV }} up -d --force-recreate'
+                      docker-compose --profile ${{ env.DEPLOY_ENV }} down -v && \
+                      docker-compose --profile ${{ env.DEPLOY_ENV }} pull && \
+                      docker-compose --profile ${{ env.DEPLOY_ENV }} up -d --force-recreate'
