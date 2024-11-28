@@ -1,9 +1,27 @@
 version: '3.8'
 
 services:
-  website:
-    image: oranmz/app:latest
+  website-dev:
+    image: oranmz/app:dev
     ports:
       - "8080:80"
     restart: unless-stopped
+    profiles:
+      - dev
+
+  website-staging:
+    image: oranmz/app:staging
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+    profiles:
+      - staging
+
+  website-prod:
+    image: oranmz/app:latest
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    profiles:
+      - prod
 #just testing
