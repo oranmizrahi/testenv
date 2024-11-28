@@ -38,7 +38,7 @@ jobs:
           if [[ ${{ github.ref }} == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           elif [[ ${{ github.event_name }} == 'pull_request' ]]; then
-            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")  # Get the latest tag and default to v0.0.0
             MAJOR=$(echo $VERSION | cut -d. -f1 | tr -d 'v')
             VERSION="v$((MAJOR+1)).0.0"
           else

@@ -1,9 +1,11 @@
 name: Deploy to Production
 
 on:
-  push:
-    tags:
-      - 'v*'
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
 
 jobs:
   deploy-production:
@@ -41,7 +43,8 @@ jobs:
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --name ${{ secrets.AZURE_VM_NAME }} \
             --command-id RunShellScript \
-            --scripts 'cd /app && \
-                      wget -O docker-compose.yaml https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/docker-compose.yaml && \
-                      docker compose --profile prod pull && \
+            --scripts 'cd /home/ISadmin/app ; \
+                      echo "Deploying to Production" ; \
+                      docker-compose --profile prod down -v ; \
+                      docker compose --profile prod pull ; \
                       docker compose --profile prod up -d --force-recreate'
