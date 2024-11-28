@@ -37,14 +37,25 @@ jobs:
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
-          elif [[ $GITHUB_EVENT_NAME == pull_request ]]; then
+          elif [[ $GITHUB_EVENT_NAME == pull_request && $GITHUB_BASE_REF == 'main' ]]; then
+            # For pull requests to main, increment major version
             LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-            VERSION=$(echo $LAST_TAG | awk -F. '{printf "%d.%d.%d", $1, $2, $3+1}')
+            CURRENT_MAJOR=$(echo $LAST_TAG | sed 's/v//' | awk -F. '{print $1}')
+            NEW_MAJOR=$((CURRENT_MAJOR + 1))
+            VERSION="${NEW_MAJOR}.0.0"
+          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+            # On main branch, use last tag
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            VERSION=$(echo $LAST_TAG | sed 's/v//')
           else
+            # For dev and staging, use current version with branch name
             BRANCH=${GITHUB_REF#refs/heads/}
             echo "ENV=$BRANCH" >> $GITHUB_ENV
-            VERSION=$(echo $GITHUB_REF_NAME | grep -Eo '[0-9]+.[0-9]+.[0-9]+' || echo "0.0.0")
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            BASE_VERSION=$(echo $LAST_TAG | sed 's/v//')
+            VERSION="${BASE_VERSION}-${BRANCH}"
           fi
+          
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
@@ -56,8 +67,8 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=${{ env.VERSION }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}  # Only push latest on main
-            type=raw,value=${{ env.ENV }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ env.ENV }},enable=${{ github.ref != 'refs/heads/main' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
