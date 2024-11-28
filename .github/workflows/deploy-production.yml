@@ -1,34 +1,20 @@
 name: Deploy to Production
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows: ["Build Docker Image"]
+    types:
+      - completed
+    branches:
+      - main
 
 jobs:
   deploy-production:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     environment: production
     
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            oranmz/app:latest
-            oranmz/app:${{ github.ref_name }}
-        
       - name: Azure Login
         uses: azure/login@v1
         with:
@@ -36,12 +22,12 @@ jobs:
 
       - name: Deploy to Production VM
         run: |
-          # Use Azure CLI to execute deployment commands
           az vm run-command invoke \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --name ${{ secrets.AZURE_VM_NAME }} \
             --command-id RunShellScript \
-            --scripts 'cd /app && \
-                      wget -O docker-compose.yaml https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/docker-compose.yaml && \
-                      docker compose --profile prod pull && \
+            --scripts 'cd /home/ISadmin/app ; \
+                      echo "Deploying to Production" ; \
+                      docker-compose --profile prod down -v ; \
+                      docker compose --profile prod pull ; \
                       docker compose --profile prod up -d --force-recreate'
