@@ -54,6 +54,5 @@ jobs:
             --command-id RunShellScript \
             --scripts 'cd /home/ISadmin/app ; \
                       echo "Deploying to ${{ env.DEPLOY_ENV }}" ; \
-                      docker-compose --profile ${{ env.DEPLOY_ENV }} down -v ; \
                       docker-compose --profile ${{ env.DEPLOY_ENV }} pull ; \
                       docker-compose --profile ${{ env.DEPLOY_ENV }} up -d --force-recreate'
