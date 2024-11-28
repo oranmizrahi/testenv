@@ -29,13 +29,19 @@ jobs:
             oranmz/app:latest
             oranmz/app:${{ github.ref_name }}
         
-      - name: Deploy to Production Server
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Azure Login
+        uses: azure/login@v1
         with:
-          host: ${{ secrets.AZURE_VM_IP }}
-          username: ${{ secrets.AZURE_VM_USERNAME }}
-          password: ${{ secrets.AZURE_VM_PASSWORD }}
-          script: |
-            cd /app
-            docker compose --profile prod pull
-            docker compose --profile prod up -d --force-recreate
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Production VM
+        run: |
+          # Use Azure CLI to execute deployment commands
+          az vm run-command invoke \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+            --name ${{ secrets.AZURE_VM_NAME }} \
+            --command-id RunShellScript \
+            --scripts 'cd /app && \
+                      wget -O docker-compose.yaml https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/docker-compose.yaml && \
+                      docker compose --profile prod pull && \
+                      docker compose --profile prod up -d --force-recreate'
