@@ -45,7 +45,7 @@ jobs:
           else
             BRANCH=${GITHUB_REF#refs/heads/}
             echo "ENV=$BRANCH" >> $GITHUB_ENV
-            VERSION="$BASE_VERSION.${GITHUB_RUN_NUMBER}"
+            VERSION="$BASE_VERSION.${GITHUB_RUN_NUMBER}" #
           fi
           
           echo "VERSION=$VERSION" >> $GITHUB_ENV
