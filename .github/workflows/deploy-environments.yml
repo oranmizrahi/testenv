@@ -21,6 +21,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set environment variables
+        id: env_vars
+        run: |
+          if [[ ${{ github.ref }} == 'refs/heads/dev' ]]; then
+            echo "DEPLOY_ENV=dev" >> $GITHUB_ENV
+            echo "DOCKER_TAG=dev" >> $GITHUB_ENV
+          elif [[ ${{ github.ref }} == 'refs/heads/staging' ]]; then
+            echo "DEPLOY_ENV=staging" >> $GITHUB_ENV
+            echo "DOCKER_TAG=staging" >> $GITHUB_ENV
+          fi
       - name: Azure Login
         uses: azure/login@v1
         with:
