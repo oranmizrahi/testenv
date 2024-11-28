@@ -43,11 +43,8 @@ jobs:
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             # Production release with tag
             VERSION=${GITHUB_REF#refs/tags/v}
-            echo "ENV=prod" >> $GITHUB_ENV
           else
-            # Branch build - use shorter version with run number
-            BRANCH=${GITHUB_REF#refs/heads/}
-            echo "ENV=$BRANCH" >> $GITHUB_ENV
+            # Branch build or PR - use shorter version with run number
             VERSION="$BASE_VERSION.${GITHUB_RUN_NUMBER}"
           fi
           
