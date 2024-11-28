@@ -36,15 +36,16 @@ jobs:
         id: env_vars
         run: |
           # Get the last tag version
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          BASE_VERSION=$(echo $LAST_TAG | sed 's/v//')
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0")
+          # Get major.minor version only (e.g., 1.0)
+          BASE_VERSION=$(echo $LAST_TAG | sed 's/v//' | awk -F. '{print $1"."$2}')
           
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             # Production release with tag
             VERSION=${GITHUB_REF#refs/tags/v}
             echo "ENV=prod" >> $GITHUB_ENV
           else
-            # Branch build - always use run number
+            # Branch build - use shorter version with run number
             BRANCH=${GITHUB_REF#refs/heads/}
             echo "ENV=$BRANCH" >> $GITHUB_ENV
             VERSION="$BASE_VERSION.${GITHUB_RUN_NUMBER}"
