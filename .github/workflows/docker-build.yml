@@ -37,21 +37,25 @@ jobs:
         id: env_vars
         run: |
           if [[ ${{ github.ref }} == refs/tags/* ]]; then
+            # If it's a tag, use the tag version directly
             VERSION=${GITHUB_REF#refs/tags/}
             echo "ENV=prod" >> $GITHUB_ENV
-          elif [[ ${{ github.event_name }} == 'pull_request' && ${{ github.event.pull_request.base.ref }} == 'main' ]]; then
-            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-            MAJOR=$(echo $VERSION | cut -d. -f1 | tr -d 'v')
-            VERSION="v$((MAJOR+1)).0.0"
-            echo "ENV=prod" >> $GITHUB_ENV
-          elif [[ ${{ github.ref }} == refs/heads/* ]]; then
+          else
+            # Get the latest tag, default to v0.0.0 if none exists
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            # Split version into parts
+            MAJOR=$(echo $LATEST_TAG | cut -d. -f1)
+            MINOR=$(echo $LATEST_TAG | cut -d. -f2)
+            PATCH=$(echo $LATEST_TAG | cut -d. -f3)
+            # Increment patch version
+            VERSION="${MAJOR}.${MINOR}.$((PATCH+1))"
+            # Set environment based on branch
             BRANCH=${GITHUB_REF#refs/heads/}
-            SHORT_SHA=$(git rev-parse --short HEAD)
-            VERSION="$BRANCH-$SHORT_SHA"
             echo "ENV=$BRANCH" >> $GITHUB_ENV
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
 
       - name: Extract metadata for Docker
         id: meta
