@@ -29,9 +29,12 @@ jobs:
         
       - name : Deploy to vm2
         run: |
-          echo "SSH into vm2 and pull image"
-          ssh -i ~/.ssh/github_runner 10.0.3.5 "echo '123123' | docker login 10.0.3.6:5000 -u oran --password-stdin && \
-                        docker pull 10.0.3.6:5000/testenv:${{ github.sha }} && \
-                        docker stop testenv || true && \
-                        docker rm testenv || true && \
-                        docker run -d --name testenv 10.0.3.6:5000/testenv:${{ github.sha }}"
+          echo "SSH into vm2 and configure Docker"
+          ssh -i ~/.ssh/github_runner 10.0.3.5 "sudo mkdir -p /etc/docker && \
+            echo '{\"insecure-registries\": [\"10.0.3.6:5000\"]}' | sudo tee /etc/docker/daemon.json && \
+            sudo systemctl restart docker && \
+            echo '123123' | docker login 10.0.3.6:5000 -u oran --password-stdin && \
+            docker pull 10.0.3.6:5000/testenv:${{ github.sha }} && \
+            docker stop testenv || true && \
+            docker rm testenv || true && \
+            docker run -d --name testenv 10.0.3.6:5000/testenv:${{ github.sha }}"
